@@ -27,9 +27,18 @@ export default (...options) => {
 
 	return (ctx, res) => {
 		const [{pwd}] = options;
-
 		const processor = postProcessor(ctx, res);
+		const posthtmlConfig = processor.name === 'posthtml' && options && options[0][processor.name] && options[0][processor.name].plugins;
 		const config = postSequence(postConfig(...options)[processor.name].plugins, {processor: processor.name, namespace: true});
+
+		if (posthtmlConfig) {
+			for (let plug in config) {
+				if (config.hasOwnProperty(plug) && !Object.keys(posthtmlConfig).includes(plug)) {
+					delete config[plug]
+				}
+			}
+		}
+
 		const plugins = Object.keys(config)
 			.map(plugin => loadPlugin(plugin, warning, pwd || process.cwd())(config[plugin]))
 			.filter(plugin => plugin !== undefined);
